@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { FaHeart } from "react-icons/fa";
 import { FiHeart } from "react-icons/fi";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const Posts = ({ user }) => {
 
@@ -82,11 +83,11 @@ const Posts = ({ user }) => {
                                                 <h1>{post.caption}</h1>
                                                 <p className="text-md font-semibold text-indigo-600">{post.user.username}</p>
                                             </div>
-
-                                            <button
+                                    
+                                        <button
                                                 onClick={() => handleLike(post._id)}
                                                 className="flex items-center gap-1"
-                                            >
+                                                >
                                                 {
                                                     isLiked ? (
                                                         <FaHeart className="text-indigo-600" />
@@ -96,6 +97,7 @@ const Posts = ({ user }) => {
                                                 }
                                                 <span>{post.likes?.length || 0}</span>
                                             </button>
+                                    
 
                                         </div>
                                     </div>

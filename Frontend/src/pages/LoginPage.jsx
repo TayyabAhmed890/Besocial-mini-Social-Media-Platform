@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
 
-const LoginPage = ({setIsLoggedIn,setUser}) => {
+const LoginPage = ({setIsLoggedIn,checkAuth,setUser}) => {
 
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
@@ -37,12 +37,14 @@ const LoginPage = ({setIsLoggedIn,setUser}) => {
         return false;
       }
 
+      await checkAuth();
+
       setSuccessMessage(result.message || "Login successful");
       setServerError(""); // clear error
       localStorage.setItem("isLoggedIn", "true");
-      setUser(result.user)
-
+      
       return true; // ✅ success
+
     } catch (error) {
       console.error(`Error: ${error}`)
       setSuccessMessage("");
@@ -90,7 +92,7 @@ const LoginPage = ({setIsLoggedIn,setUser}) => {
     // ✅ success
     setIdentifier("");
     setPassword("");
-    setIsLoggedIn(true);
+    setIsLoggedIn(true)
 
     setTimeout(() => {
       navigate("/");
@@ -119,13 +121,13 @@ const LoginPage = ({setIsLoggedIn,setUser}) => {
               Password
             </label>
             <div className="flex justify-between items-center border rounded-sm gap-2 pr-2">
-            <input value={password} className="p-2 w-full outline-none" type={showPassword ? 'password' : 'text'} placeholder="Enter Your Password" onChange={(e) => setPassword(e.target.value)} />
+            <input value={password} className="p-2 w-full outline-none" type={showPassword ? 'text' : 'password'} placeholder="Enter Your Password" onChange={(e) => setPassword(e.target.value)} />
             <button
             className="active:text-indigo-500"
               type="button"
               onClick={() => setShowPassword(!showPassword)}>
               {
-                showPassword ? <IoEyeOff /> : <FaEye />
+                showPassword ? <FaEye /> : <IoEyeOff />
               }
             </button>
             </div>

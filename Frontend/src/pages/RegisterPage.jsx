@@ -148,13 +148,13 @@ const RegisterPage = () => {
                             Password
                         </label>
                         <div className="flex justify-between items-center border rounded-sm gap-2 pr-2">
-                            <input value={password} className="p-2 w-full outline-none" type={showPassword ? 'password' : 'text'} placeholder="Enter Your Password" onChange={(e) => setPassword(e.target.value)} />
+                            <input value={password} className="p-2 w-full outline-none" type={showPassword ? 'text' : 'password'} placeholder="Enter Your Password" onChange={(e) => setPassword(e.target.value)} />
                             <button
                                 className="active:text-indigo-500"
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}>
                                 {
-                                    showPassword ? <IoEyeOff /> : <FaEye />
+                                    showPassword ? <FaEye /> : <IoEyeOff />
                                 }
                             </button>
                         </div>

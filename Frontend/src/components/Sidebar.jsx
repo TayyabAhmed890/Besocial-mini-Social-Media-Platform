@@ -24,7 +24,8 @@ const Sidebar = () => {
             <aside className={`h-screen w-60 bg-indigo-200 fixed z-10 top-0 left-0 flex flex-col gap-3 ${open ? "translate-x-0" : "-translate-x-full"
                 }`}>
                 <div className="flex justify-between border-b p-2 mx-2 items-center">
-                    <h1 className=" text-2xl font-bold text-indigo-600">Besocial</h1>
+                    <h1 className=" text-2xl font-bold text-indigo-600">
+                        <Link to={'/'}>Besocial</Link></h1>
                     <GoSidebarExpand size={25} onClick={handleToggle} />
                 </div>
                 <div>
