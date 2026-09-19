@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 
+// auth hook
 const useAuth = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
