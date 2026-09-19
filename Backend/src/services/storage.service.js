@@ -1,20 +1,45 @@
-const {ImageKit} = require('@imagekit/nodejs')
-const dotenv = require('dotenv')
+const ImageKit = require("imagekit");
+const dotenv = require("dotenv");
 dotenv.config();
 
-const PrivateKey = process.env.PRIVATE_KEY;
+// ImageKit Instance Initialization
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+});
 
-const client = new ImageKit({
-    privateKey: PrivateKey
-})
+// 1. Upload Function
+async function uploadFile(buffer, fileName = "image.jpg") {
+  try {
+    const result = await imagekit.upload({
+      file: buffer.toString("base64"),
+      fileName: fileName,
+    });
 
-async function uploadFile(buffer){
-    const result = await client.files.upload({
-        file: buffer.toString("base64"),
-        fileName: "image.jpg"
-    })
-
-    return result;
+    // Is result me se fileId aur url dono milte hain
+    return {
+      fileId: result.fileId, // 🔥 DB me save karna zaroori hai
+      url: result.url,
+    };
+  } catch (error) {
+    console.error("ImageKit Upload Error:", error);
+    throw error;
+  }
 }
 
-module.exports = uploadFile;
+// 2. Delete Function
+async function deleteFile(fileId) {
+  try {
+    const response = await imagekit.deleteFile(fileId);
+    return response;
+  } catch (error) {
+    console.error("ImageKit Delete Error:", error);
+    throw error;
+  }
+}
+
+module.exports = {
+  uploadFile,
+  deleteFile,
+};

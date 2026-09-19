@@ -1,11 +1,22 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
 const postSchema = new mongoose.Schema({
-    image: String,
-    caption: String,
+    image: {
+        type: String,
+        required: true
+    },
+    caption: {
+        type: String,
+        default: ""
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user"
+        ref: "user",
+        required: true
+    },
+    fileId: {
+        type:String,
+        required: true
     },
     likes: [
         {
@@ -13,7 +24,7 @@ const postSchema = new mongoose.Schema({
             ref: "user"
         }
     ]
-})
+}, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
 
 const postModel = mongoose.model("posts", postSchema);
 
