@@ -7,7 +7,7 @@ import HomePage from "./pages/HomePage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
-import useAuth from "./Hooks/useAuth"; // Custom Hook Import
+import useAuth from "./hooks/useAuth"; // Custom Hook Import
 import ProfilePage from "./pages/ProfilePage";
 import AllUsers from "./pages/AllUsers";
 
