@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 // auth hook
 const useAuth = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -8,7 +10,7 @@ const useAuth = () => {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/auth/me", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
         credentials: "include",
       });
 
