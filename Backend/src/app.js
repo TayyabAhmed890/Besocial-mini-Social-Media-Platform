@@ -8,6 +8,7 @@ const db = require('./db/connect'); // Connect DB import karein
 require('dotenv').config();
 
 const app = express();
+app.set('trust proxy', 1);
 
 // .env se URL lene ke sath trailing slash ko strip karna
 const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : "";
