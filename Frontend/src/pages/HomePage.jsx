@@ -3,7 +3,7 @@ import { FaRegNewspaper, FaPlusCircle } from "react-icons/fa";
 import { BsCardList as CardIcon } from "react-icons/bs";
 import useFetch from "../hooks/useFetch";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const HomePage = ({ user, isUserLoading }) => {
   // Check if post count is pre-populated in user prop

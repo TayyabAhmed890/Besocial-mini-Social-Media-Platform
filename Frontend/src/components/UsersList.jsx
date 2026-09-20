@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FiUserPlus, FiUserCheck, FiLoader } from "react-icons/fi";
 import useFetch from "../hooks/useFetch";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const UsersList = () => {
   const { data, loading, error } = useFetch(`${API_BASE_URL}/api/users/all`);
