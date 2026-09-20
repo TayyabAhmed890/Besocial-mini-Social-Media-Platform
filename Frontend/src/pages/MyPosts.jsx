@@ -3,7 +3,7 @@ import { IoMdCloseCircle } from "react-icons/io";
 import { FiTrash2, FiAlertTriangle, FiClock, FiMaximize2 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import useFetch from "../hooks/useFetch";
-import useDelete from "../Hooks/useDelete";
+import useDelete from "../hooks/useDelete";
 
 // Base API URL from environment variables for security
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";

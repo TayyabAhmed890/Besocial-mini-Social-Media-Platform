@@ -4,8 +4,8 @@ import Sidebar from "./Sidebar";
 import { TbLogout } from "react-icons/tb";
 import { FiUser, FiAlertCircle, FiTrash2, FiChevronDown, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import Button from "./Button";
-import usePost from "../Hooks/usePost";
-import useDelete from "../Hooks/useDelete"; // Custom Delete Hook Import
+import usePost from "../hooks/usePost";
+import useDelete from "../hooks/useDelete"; // Custom Delete Hook Import
 
 const Navbar = ({ isLoggedIn, setIsLoggedIn, user, setUser }) => {
   const navigate = useNavigate();

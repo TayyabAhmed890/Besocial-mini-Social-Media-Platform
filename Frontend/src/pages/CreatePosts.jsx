@@ -1,7 +1,7 @@
 import Button from "../components/Button";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import usePost from "../Hooks/usePost";
+import usePost from "../hooks/usePost";
 import { HiOutlineCloudUpload, HiX, HiCheckCircle, HiExclamationCircle } from "react-icons/hi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";

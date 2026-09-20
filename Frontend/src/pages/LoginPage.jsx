@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
 import { FiLock, FiUser, FiMail, FiAlertCircle, FiCheckCircle } from "react-icons/fi";
-import usePost from "../Hooks/usePost";
+import usePost from "../hooks/usePost";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
