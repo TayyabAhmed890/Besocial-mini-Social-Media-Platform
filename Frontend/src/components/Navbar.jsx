@@ -11,7 +11,7 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn, user, setUser }) => {
   const navigate = useNavigate();
 
   // Environment Base URL
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
   // UI State Modals & Dropdown
   const [showDropdown, setShowDropdown] = useState(false);
