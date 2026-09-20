@@ -1,7 +1,8 @@
 // Database Model aur Storage Service ko import kar rahe hain
 const postModel = require('../models/post.model');
-const { uploadFile, deleteFile } = require("../services/storage.service"); // 🔥 Destructuring fix
+const { uploadFile, deleteFile } = require("../services/storage.service");
 const mongoose = require("mongoose");
+const redis = require('../config/redis'); // Redis instance
 
 // ==========================================
 // 1. CREATE POST CONTROLLER
@@ -12,17 +13,23 @@ const createPost = async (req, res) => {
             return res.status(400).json({ message: "Image file is required!" });
         }
 
-        // ImageKit par file upload kar rahe hain (result se fileId & url dono milenge)
+        const userId = req.user?.id || req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized request!" });
+        }
+
         const result = await uploadFile(req.file.buffer);
         const { caption } = req.body;
 
-        // Database me post document create kar rahe hain (🔥 fileId save karna zaroori hai)
         const post = await postModel.create({
             image: result.url,
-            fileId: result.fileId, // 🔥 FIX: File ID delete ke liye save kar li
+            fileId: result.fileId,
             caption: caption || "",
-            user: req.user.id,
+            user: userId,
         });
+
+        // 🔥 Cache Invalidation: Purana feed cache delete karein taake naya post show ho
+        await redis.del("feed_posts");
 
         return res.status(201).json({
             message: "Post Created Successfully!",
@@ -40,13 +47,33 @@ const createPost = async (req, res) => {
 // ==========================================
 const getPost = async (req, res) => {
     try {
+        const cacheKey = "feed_posts";
+
+        // 1. Redis Cache Check Karein
+        const cachedPosts = await redis.get(cacheKey);
+
+        if (cachedPosts) {
+            console.log("⚡ [CACHE HIT] Posts fetched from Upstash Redis");
+            return res.status(200).json({
+                message: "Posts Fetched Successfully (Cached)!",
+                posts: cachedPosts,
+                source: "cache"
+            });
+        }
+
+        // 2. Cache Miss: Database Hit
+        console.log("🗄️ [CACHE MISS] Fetching posts from MongoDB");
         const posts = await postModel.find()
             .populate('user', 'username')
             .sort({ createdAt: -1 });
 
+        // 3. Data Ko Redis Mein 5 Minutes (300 seconds) Ke Liye Cache Karein
+        await redis.set(cacheKey, JSON.stringify(posts), { ex: 300 });
+
         return res.status(200).json({
             message: "Posts Fetched Successfully!",
-            posts
+            posts,
+            source: "db"
         });
 
     } catch (error) {
@@ -62,6 +89,10 @@ const getPostbyID = async (req, res) => {
     try {
         const { id } = req.params;
 
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid Post ID format!" });
+        }
+
         const post = await postModel.findById(id).populate('user', 'username');
 
         if (!post) {
@@ -75,7 +106,7 @@ const getPostbyID = async (req, res) => {
 
     } catch (error) {
         console.error(`Get Post By ID Error: ${error}`);
-        return res.status(500).json({ message: "Invalid Post ID or Server Error!" });
+        return res.status(500).json({ message: "Server Error!" });
     }
 };
 
@@ -87,39 +118,22 @@ const deletePost = async (req, res) => {
         const { id } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({
-                message: "Invalid Post ID format!"
-            });
+            return res.status(400).json({ message: "Invalid Post ID format!" });
         }
 
         const userId = req.user?.id || req.user?._id;
-
-        if (!userId) {
-            return res.status(401).json({ message: "Unauthorized request!" });
-        }
-
-        const post = await postModel.findOneAndDelete({
-            _id: id,
-            user: userId
-        });
+        const post = await postModel.findOneAndDelete({ _id: id, user: userId });
 
         if (!post) {
-            return res.status(404).json({
-                message: "Post Not Found or Unauthorized to delete!"
-            });
+            return res.status(404).json({ message: "Post Not Found or Unauthorized!" });
         }
 
-        // 🔥 Debug Logs
-        // console.log("Deleted Post Object from DB:", post);
-        // console.log("File ID to delete from ImageKit:", post.fileId);
-
-        // 🔥 ImageKit se image delete kar rahe hain using fileId
         if (post.fileId) {
-            const deleteResult = await deleteFile(post.fileId);
-            console.log("ImageKit Delete Response:", deleteResult);
-        } else {
-            console.log("⚠️ Warning: No fileId found on this post. ImageKit deletion skipped.");
+            await deleteFile(post.fileId);
         }
+
+        // 🔥 Cache Invalidation: Delete hone par bhi feed cache reset karein
+        await redis.del("feed_posts");
 
         return res.status(200).json({ message: "Post Deleted Successfully!" });
 
@@ -134,11 +148,12 @@ const deletePost = async (req, res) => {
 // ==========================================
 const myPost = async (req, res) => {
     try {
-        if (!req.user || !req.user.id) {
+        const userId = req.user?.id || req.user?._id;
+        if (!userId) {
             return res.status(401).json({ message: "Unauthorized Request" });
         }
 
-        const posts = await postModel.find({ user: req.user.id })
+        const posts = await postModel.find({ user: userId })
             .populate('user', 'username')
             .sort({ createdAt: -1 });
 
@@ -159,7 +174,11 @@ const myPost = async (req, res) => {
 const likePost = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.user.id;
+        const userId = req.user?.id || req.user?._id;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid Post ID format!" });
+        }
 
         const post = await postModel.findById(id);
 
@@ -170,10 +189,11 @@ const likePost = async (req, res) => {
             });
         }
 
-        const alreadyLiked = post.likes.includes(userId);
+        // Safe ObjectId vs String Comparison
+        const alreadyLiked = post.likes.some(likeId => likeId.toString() === userId.toString());
 
         if (alreadyLiked) {
-            post.likes = post.likes.filter((likeId) => likeId.toString() !== userId);
+            post.likes = post.likes.filter((likeId) => likeId.toString() !== userId.toString());
         } else {
             post.likes.push(userId);
         }

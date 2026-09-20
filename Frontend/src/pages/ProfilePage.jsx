@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiMail, FiCalendar, FiGrid, FiHeart, FiUsers, FiUserCheck, FiX } from "react-icons/fi";
 import useFetch from "../hooks/useFetch";
 
@@ -6,17 +6,49 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000
 
 const ProfilePage = () => {
   const { data, loading, error } = useFetch(`${API_BASE_URL}/api/users/profile`);
-
-  // Modal active states ('followers', 'following', or null)
   const [modalType, setModalType] = useState(null);
+
+  // Local state for instant real-time updates
+  const [profileData, setProfileData] = useState(null);
+
+  // Sync state when API data resolves
+  useEffect(() => {
+    if (data) {
+      setProfileData(data);
+    }
+  }, [data]);
+
+  // Callback to update counts instantly when follow/unfollow happens inside modal
+  const handleFollowChange = (isFollowing, targetUserId) => {
+    setProfileData((prev) => {
+      if (!prev) return prev;
+      const currentFollowingCount = prev.user?.following?.length || prev.stats?.followingCount || 0;
+      const updatedCount = isFollowing ? currentFollowingCount + 1 : Math.max(0, currentFollowingCount - 1);
+
+      return {
+        ...prev,
+        user: {
+          ...prev.user,
+          following: isFollowing
+            ? [...(prev.user?.following || []), targetUserId]
+            : (prev.user?.following || []).filter((id) => id !== targetUserId),
+        },
+        stats: {
+          ...prev.stats,
+          followingCount: updatedCount,
+        },
+      };
+    });
+  };
 
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto py-12 px-4 animate-pulse space-y-6">
-        <div className="h-32 bg-slate-200 rounded-2xl w-full"></div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="h-24 bg-slate-200 rounded-xl"></div>
-          <div className="h-24 bg-slate-200 rounded-xl"></div>
+        <div className="h-32 bg-slate-200 rounded-3xl w-full"></div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 bg-slate-200 rounded-2xl"></div>
+          ))}
         </div>
       </div>
     );
@@ -30,29 +62,30 @@ const ProfilePage = () => {
     );
   }
 
-  const { user, stats } = data || {};
+  const { user, stats } = profileData || {};
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 font-sans tracking-tight">
       {/* Profile Card */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
-        {/* Header / Avatar */}
-        <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-3xl sm:text-4xl shadow-md shadow-indigo-100 uppercase">
+        
+        {/* Header / Avatar Section */}
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-3xl sm:text-4xl shadow-md shadow-indigo-100 uppercase shrink-0">
             {user?.username?.charAt(0) || "U"}
           </div>
 
-          <div className="space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 capitalize">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 capitalize truncate">
               {user?.username}
             </h1>
-            <p className="text-sm text-slate-500 flex items-center justify-center sm:justify-start gap-1.5 font-medium">
-              <FiMail className="text-indigo-600" />
-              {user?.email}
+            <p className="text-sm text-slate-500 flex items-center justify-center sm:justify-start gap-1.5 font-medium truncate">
+              <FiMail className="text-indigo-600 shrink-0" />
+              <span className="truncate">{user?.email}</span>
             </p>
             {user?.createdAt && (
-              <p className="text-xs text-slate-400 flex items-center justify-center sm:justify-start gap-1.5 pt-1">
-                <FiCalendar /> Joined{" "}
+              <p className="text-xs text-slate-400 flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
+                <FiCalendar className="shrink-0" /> Joined{" "}
                 {new Date(user.createdAt).toLocaleDateString("en-US", {
                   month: "short",
                   year: "numeric",
@@ -64,73 +97,75 @@ const ProfilePage = () => {
 
         <hr className="border-slate-100" />
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {/* Total Created Posts */}
-          <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex flex-col items-center sm:items-start space-y-2">
-            <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl text-lg">
+        {/* Responsive Stats Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          
+          {/* Posts */}
+          <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center gap-3 min-w-0">
+            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl text-xl shrink-0 flex items-center justify-center">
               <FiGrid />
             </div>
-            <div>
-              <p className="text-2xl font-extrabold text-slate-900">
+            <div className="min-w-0">
+              <p className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-none mb-1 truncate">
                 {stats?.totalPosts || 0}
               </p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">
                 Posts
               </p>
             </div>
           </div>
 
-          {/* Total Liked Posts */}
-          <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex flex-col items-center sm:items-start space-y-2">
-            <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl text-lg">
+          {/* Liked */}
+          <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center gap-3 min-w-0">
+            <div className="p-3 bg-rose-100 text-rose-600 rounded-xl text-xl shrink-0 flex items-center justify-center">
               <FiHeart />
             </div>
-            <div>
-              <p className="text-2xl font-extrabold text-slate-900">
+            <div className="min-w-0">
+              <p className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-none mb-1 truncate">
                 {stats?.totalLikedPosts || 0}
               </p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">
                 Liked
               </p>
             </div>
           </div>
 
-          {/* Followers Clickable Card */}
+          {/* Followers Clickable */}
           <button
             onClick={() => setModalType("followers")}
-            className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex flex-col items-center sm:items-start space-y-2 hover:bg-slate-100 transition-colors text-left group cursor-pointer"
+            className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center gap-3 hover:bg-slate-100/80 transition-all text-left group cursor-pointer active:scale-95 min-w-0"
           >
-            <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl text-lg group-hover:scale-105 transition-transform">
+            <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl text-xl shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform">
               <FiUsers />
             </div>
-            <div>
-              <p className="text-2xl font-extrabold text-slate-900">
+            <div className="min-w-0">
+              <p className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-none mb-1 truncate">
                 {user?.followers?.length || stats?.followersCount || 0}
               </p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">
                 Followers
               </p>
             </div>
           </button>
 
-          {/* Following Clickable Card */}
+          {/* Following Clickable */}
           <button
             onClick={() => setModalType("following")}
-            className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex flex-col items-center sm:items-start space-y-2 hover:bg-slate-100 transition-colors text-left group cursor-pointer"
+            className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center gap-3 hover:bg-slate-100/80 transition-all text-left group cursor-pointer active:scale-95 min-w-0"
           >
-            <div className="p-2.5 bg-sky-100 text-sky-600 rounded-xl text-lg group-hover:scale-105 transition-transform">
+            <div className="p-3 bg-sky-100 text-sky-600 rounded-xl text-xl shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform">
               <FiUserCheck />
             </div>
-            <div>
-              <p className="text-2xl font-extrabold text-slate-900">
+            <div className="min-w-0">
+              <p className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-none mb-1 truncate">
                 {user?.following?.length || stats?.followingCount || 0}
               </p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">
                 Following
               </p>
             </div>
           </button>
+
         </div>
       </div>
 
@@ -139,6 +174,7 @@ const ProfilePage = () => {
         <UserListModal
           type={modalType}
           onClose={() => setModalType(null)}
+          onFollowChange={handleFollowChange}
         />
       )}
     </div>
@@ -148,7 +184,7 @@ const ProfilePage = () => {
 // ==========================================
 // User List Modal Component
 // ==========================================
-const UserListModal = ({ type, onClose }) => {
+const UserListModal = ({ type, onClose, onFollowChange }) => {
   const isFollowers = type === "followers";
   const endpoint = isFollowers
     ? `${API_BASE_URL}/api/users/followers`
@@ -160,6 +196,7 @@ const UserListModal = ({ type, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        
         {/* Modal Header */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h2 className="text-lg font-bold text-slate-900 capitalize flex items-center gap-2">
@@ -175,12 +212,12 @@ const UserListModal = ({ type, onClose }) => {
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 max-h-80 overflow-y-auto space-y-3">
+        <div className="p-4 max-h-80 overflow-y-auto space-y-2">
           {loading && (
             <div className="space-y-3 py-2">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-3 animate-pulse">
-                  <div className="w-10 h-10 rounded-full bg-slate-200"></div>
+                  <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0"></div>
                   <div className="flex-1 space-y-1">
                     <div className="h-4 bg-slate-200 rounded w-1/2"></div>
                     <div className="h-3 bg-slate-200 rounded w-1/3"></div>
@@ -205,22 +242,21 @@ const UserListModal = ({ type, onClose }) => {
           {!loading &&
             !error &&
             userList.map((item) => {
-              // Ensure user object is populated
               const u = item.user || item;
               return (
                 <div
                   key={u._id || u.id}
                   className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold uppercase text-sm">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold uppercase text-sm shrink-0">
                       {u.username?.charAt(0) || "U"}
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 capitalize">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900 capitalize truncate">
                         {u.username}
                       </p>
-                      <p className="text-xs text-slate-400">{u.email}</p>
+                      <p className="text-xs text-slate-400 truncate">{u.email}</p>
                     </div>
                   </div>
                 </div>

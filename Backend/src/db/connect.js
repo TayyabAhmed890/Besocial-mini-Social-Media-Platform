@@ -1,16 +1,21 @@
-const mongoose = require("mongoose")
-const dotenv = require("dotenv")
-dotenv.config();
+const mongoose = require('mongoose');
 
-const mongo_db = process.env.MONGO_DB_URI;
+const connectDB = async () => {
+  // Connection state 1 (connected) ya 2 (connecting) hai to bypass karein
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
 
-const connectDB = async () =>{
-    try {
-        await mongoose.connect(mongo_db);
-        console.log("MongoDB Connected!")
-    } catch (error) {
-        console.error(`Error: ${error}`)
-    }
-}
+  try {
+    await mongoose.connect(process.env.MONGO_DB_URI, {
+      bufferCommands: false, // Buffering disable karein taake timeouts na hon
+      serverSelectionTimeoutMS: 5000,
+    });
+    console.log("MongoDB Connected via Request Trigger");
+  } catch (error) {
+    console.error("MongoDB Connection Failed:", error.message);
+    throw error;
+  }
+};
 
 module.exports = connectDB;

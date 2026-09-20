@@ -1,15 +1,11 @@
-const app = require("./src/app")
-const dotenv = require("dotenv")
-const db = require("./src/db/connect");
+const app = require("./src/app");
+const dotenv = require("dotenv");
 dotenv.config();
 
-const port = process.env.PORT;
+const port = process.env.PORT || 8000;
 
-// database connection
-db();
+app.listen(port, () => {
+    console.log(`Server is Running on http://localhost:${port}`);
+});
 
-app.listen(port,()=>{
-    console.log(`Server is Running on http://localhost:${port}`)
-})
-
-module.export = app;
+module.exports = app; // Correct spelling with 's'
