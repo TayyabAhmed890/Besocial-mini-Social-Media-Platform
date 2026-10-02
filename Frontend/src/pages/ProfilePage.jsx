@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { FiMail, FiCalendar, FiGrid, FiHeart, FiUsers, FiUserCheck, FiX } from "react-icons/fi";
+import { FiMail, FiCalendar, FiGrid, FiUsers, FiUserCheck} from "react-icons/fi";
 import useFetch from "../hooks/useFetch";
+import UserListModal from "../components/UserDetails";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -98,7 +99,7 @@ const ProfilePage = () => {
         <hr className="border-slate-100" />
 
         {/* Responsive Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           
           {/* Posts */}
           <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center gap-3 min-w-0">
@@ -109,26 +110,14 @@ const ProfilePage = () => {
               <p className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-none mb-1 truncate">
                 {stats?.totalPosts || 0}
               </p>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">
+              <p className="text-[11px] font-bold text-slate-600 tracking-wider truncate">
                 Posts
               </p>
             </div>
           </div>
 
           {/* Liked */}
-          <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center gap-3 min-w-0">
-            <div className="p-3 bg-rose-100 text-rose-600 rounded-xl text-xl shrink-0 flex items-center justify-center">
-              <FiHeart />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-none mb-1 truncate">
-                {stats?.totalLikedPosts || 0}
-              </p>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">
-                Liked
-              </p>
-            </div>
-          </div>
+          
 
           {/* Followers Clickable */}
           <button
@@ -142,7 +131,7 @@ const ProfilePage = () => {
               <p className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-none mb-1 truncate">
                 {user?.followers?.length || stats?.followersCount || 0}
               </p>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">
+              <p className="text-[11px] font-bold text-slate-600 tracking-wider truncate">
                 Followers
               </p>
             </div>
@@ -160,7 +149,7 @@ const ProfilePage = () => {
               <p className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-none mb-1 truncate">
                 {user?.following?.length || stats?.followingCount || 0}
               </p>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">
+              <p className="text-[11px] font-bold text-slate-600 tracking-wider truncate">
                 Following
               </p>
             </div>
@@ -177,93 +166,6 @@ const ProfilePage = () => {
           onFollowChange={handleFollowChange}
         />
       )}
-    </div>
-  );
-};
-
-// ==========================================
-// User List Modal Component
-// ==========================================
-const UserListModal = ({ type, onClose, onFollowChange }) => {
-  const isFollowers = type === "followers";
-  const endpoint = isFollowers
-    ? `${API_BASE_URL}/api/users/followers`
-    : `${API_BASE_URL}/api/users/followings`;
-
-  const { data, loading, error } = useFetch(endpoint);
-  const userList = data?.users || data || [];
-
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        
-        {/* Modal Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h2 className="text-lg font-bold text-slate-900 capitalize flex items-center gap-2">
-            {isFollowers ? <FiUsers className="text-emerald-600" /> : <FiUserCheck className="text-sky-600" />}
-            {isFollowers ? "Followers" : "Following"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
-          >
-            <FiX className="text-xl" />
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div className="p-4 max-h-80 overflow-y-auto space-y-2">
-          {loading && (
-            <div className="space-y-3 py-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-3 animate-pulse">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0"></div>
-                  <div className="flex-1 space-y-1">
-                    <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-                    <div className="h-3 bg-slate-200 rounded w-1/3"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {error && (
-            <p className="text-xs text-rose-500 text-center py-6 font-medium">
-              Failed to load list: {error}
-            </p>
-          )}
-
-          {!loading && !error && userList.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-8 font-medium">
-              No {type} found.
-            </p>
-          )}
-
-          {!loading &&
-            !error &&
-            userList.map((item) => {
-              const u = item.user || item;
-              return (
-                <div
-                  key={u._id || u.id}
-                  className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold uppercase text-sm shrink-0">
-                      {u.username?.charAt(0) || "U"}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900 capitalize truncate">
-                        {u.username}
-                      </p>
-                      <p className="text-xs text-slate-400 truncate">{u.email}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      </div>
     </div>
   );
 };

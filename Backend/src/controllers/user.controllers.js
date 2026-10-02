@@ -162,14 +162,12 @@ const getUserProfile = async (req, res) => {
         }
 
         const totalPosts = await postModel.countDocuments({ user: userId });
-        const totalLikedPosts = await postModel.countDocuments({ likes: userId });
 
         return res.status(200).json({
             success: true,
             user,
             stats: {
                 totalPosts,
-                totalLikedPosts
             }
         });
     } catch (err) {

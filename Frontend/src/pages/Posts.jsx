@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaHeart } from "react-icons/fa";
-import { FiHeart, FiX, FiLock, FiClock } from "react-icons/fi";
+import { FiX, FiLock, FiClock } from "react-icons/fi";
 import useFetch from "../hooks/useFetch";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -10,12 +9,12 @@ const Posts = ({ user }) => {
   const navigate = useNavigate();
   const currentUserId = user?._id || user?.id;
 
-  const { data: apiResponse, setData, loading, error } = useFetch(`${API_BASE_URL}/api/posts`);
+  const { data: apiResponse, loading, error } = useFetch(`${API_BASE_URL}/api/posts`);
+
   const posts = apiResponse?.posts || [];
 
   const [selectedPost, setSelectedPost] = useState(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [doubleTapAnimationId, setDoubleTapAnimationId] = useState(null);
 
   // Lock background scroll when modal open
   useEffect(() => {
@@ -54,75 +53,6 @@ const Posts = ({ user }) => {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  const handleLike = async (e, postId) => {
-    if (e) e.stopPropagation();
-
-    if (!currentUserId) {
-      setShowLoginPrompt(true);
-      return;
-    }
-
-    setDoubleTapAnimationId(postId);
-    setTimeout(() => setDoubleTapAnimationId(null), 700);
-
-    // Optimistic UI Update
-    setData((prev) => {
-      if (!prev?.posts) return prev;
-      return {
-        ...prev,
-        posts: prev.posts.map((post) => {
-          if (post._id !== postId) return post;
-
-          const isLiked = post.likes?.some((id) => id.toString() === currentUserId.toString());
-          const updatedLikes = isLiked
-            ? post.likes.filter((id) => id.toString() !== currentUserId.toString())
-            : [...(post.likes || []), currentUserId];
-
-          const updatedPost = { ...post, likes: updatedLikes };
-
-          if (selectedPost && selectedPost._id === postId) {
-            setSelectedPost(updatedPost);
-          }
-
-          return updatedPost;
-        }),
-      };
-    });
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/posts/like/${postId}`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Failed to update like status");
-
-      const result = await res.json();
-
-      if (result?.updatedLikes) {
-        setData((prev) => ({
-          ...prev,
-          posts: prev.posts.map((post) => {
-            if (post._id === postId) {
-              const freshPost = { ...post, likes: result.updatedLikes };
-              if (selectedPost && selectedPost._id === postId) {
-                setSelectedPost(freshPost);
-              }
-              return freshPost;
-            }
-            return post;
-          }),
-        }));
-      }
-    } catch (err) {
-      console.error("Like Error:", err);
-    }
-  };
-
-  const handleDoubleTap = (e, postId) => {
-    e.stopPropagation();
-    handleLike(null, postId);
-  };
 
   if (loading) {
     return (
@@ -177,8 +107,6 @@ const Posts = ({ user }) => {
                     {formatTimeAgo(post.createdAt)}
                   </span>
                 </div>
-
-                {/* Card Image Container + Classic Center White Heart Hover Overlay */}
                 <div
                   onDoubleClick={(e) => handleDoubleTap(e, post._id)}
                   className="relative aspect-square w-full bg-slate-900 overflow-hidden select-none"
@@ -188,22 +116,7 @@ const Posts = ({ user }) => {
                     src={post.image}
                     alt={post.caption || "Post content"}
                     loading="lazy"
-                  />
-
-                  {/* Double Tap Heart Pop */}
-                  {doubleTapAnimationId === post._id && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                      <FaHeart className="text-white/90 text-6xl sm:text-7xl drop-shadow-xl animate-ping duration-300" />
-                    </div>
-                  )}
-
-                  {/* Center Overlay: White Heart + Like Count */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center text-white font-bold text-base sm:text-lg">
-                    <div className="flex items-center gap-2 drop-shadow-md">
-                      <FaHeart className="text-white text-2xl sm:text-3xl" />
-                      <span>{post.likes?.length || 0}</span>
-                    </div>
-                  </div>
+                  />                
                 </div>
 
                 {/* Footer Actions & Caption Preview */}
@@ -212,17 +125,7 @@ const Posts = ({ user }) => {
                     {post.caption || "No caption provided"}
                   </p>
 
-                  <button
-                    onClick={(e) => handleLike(e, post._id)}
-                    className="p-1 rounded-full text-slate-700 hover:text-rose-500 transition-transform active:scale-90"
-                    aria-label="Like post"
-                  >
-                    {isLiked ? (
-                      <FaHeart className="text-rose-500 text-lg animate-[bounce_0.25s_ease-in-out]" />
-                    ) : (
-                      <FiHeart className="text-lg text-slate-400 hover:text-rose-500 transition-colors" />
-                    )}
-                  </button>
+                  
                 </div>
               </article>
             );
@@ -259,11 +162,6 @@ const Posts = ({ user }) => {
                 alt={selectedPost.caption}
                 className="w-full h-full object-contain max-h-[40vh] sm:max-h-[50vh] md:max-h-[80vh]"
               />
-              {doubleTapAnimationId === selectedPost._id && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <FaHeart className="text-white/90 text-7xl drop-shadow-xl animate-ping duration-300" />
-                </div>
-              )}
             </div>
 
             {/* Right Side Info Section */}
@@ -289,29 +187,6 @@ const Posts = ({ user }) => {
                 <p className="text-slate-700 text-xs sm:text-sm whitespace-pre-line leading-relaxed font-normal">
                   {selectedPost.caption || "No caption provided for this post."}
                 </p>
-              </div>
-
-              {/* Action Bar */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-6">
-                <div className="flex items-center gap-2.5">
-                  <button
-                    onClick={(e) => handleLike(e, selectedPost._id)}
-                    className="p-1 text-slate-700 hover:text-rose-500 transition-transform active:scale-90"
-                    aria-label="Like post"
-                  >
-                    {currentUserId &&
-                    selectedPost.likes?.some(
-                      (id) => id.toString() === currentUserId.toString()
-                    ) ? (
-                      <FaHeart className="text-rose-500 text-2xl animate-[bounce_0.25s_ease-in-out]" />
-                    ) : (
-                      <FiHeart className="text-2xl text-slate-400 hover:text-rose-500 transition-colors" />
-                    )}
-                  </button>
-                  <span className="font-bold text-xs sm:text-sm text-slate-800">
-                    {selectedPost.likes?.length || 0} {selectedPost.likes?.length === 1 ? "like" : "likes"}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
