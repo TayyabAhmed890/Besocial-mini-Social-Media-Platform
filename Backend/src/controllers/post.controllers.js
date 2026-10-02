@@ -47,19 +47,19 @@ const createPost = async (req, res) => {
 // ==========================================
 const getPost = async (req, res) => {
     try {
-        // const cacheKey = "feed_posts";
+        const cacheKey = "feed_posts";
 
-        // // 1. Redis Cache Check Karein
-        // const cachedPosts = await redis.get(cacheKey);
+        // 1. Redis Cache Check Karein
+        const cachedPosts = await redis.get(cacheKey);
 
-        // if (cachedPosts) {
-        //     console.log("⚡ [CACHE HIT] Posts fetched from Upstash Redis");
-        //     return res.status(200).json({
-        //         message: "Posts Fetched Successfully (Cached)!",
-        //         posts: cachedPosts,
-        //         source: "cache"
-        //     });
-        // }
+        if (cachedPosts) {
+            console.log("⚡ [CACHE HIT] Posts fetched from Upstash Redis");
+            return res.status(200).json({
+                message: "Posts Fetched Successfully (Cached)!",
+                posts: cachedPosts,
+                source: "cache"
+            });
+        }
 
         // 2. Cache Miss: Database Hit
         console.log("🗄️ [CACHE MISS] Fetching posts from MongoDB");
@@ -68,7 +68,7 @@ const getPost = async (req, res) => {
             .sort({ createdAt: -1 });
 
         // 3. Data Ko Redis Mein 5 Minutes (300 seconds) Ke Liye Cache Karein
-        // await redis.set(cacheKey, JSON.stringify(posts), { ex: 300 });
+        await redis.set(cacheKey, JSON.stringify(posts), { ex: 300 });
 
         return res.status(200).json({
             message: "Posts Fetched Successfully!",
